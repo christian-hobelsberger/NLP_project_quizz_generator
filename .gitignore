@@ -1,6 +1,10 @@
 
-.DS_Store
-Sequential_Model_System/.DS_Store
-Single_Fine_Tuned_System/.DS_Store
-.DS_Store
-.DS_Store
+code/.DS_Store
+code/evaluation_both_approaches/.DS_Store
+code/modular_approach/.DS_Store
+code/modular_approach/archive/.DS_Store
+code/unified_approach/.DS_Store
+code/unified_approach/preprocessing_and_training/.DS_Store
+code/unified_approach/preprocessing_and_training/bart-large/.DS_Store
+code/unified_approach/preprocessing_and_training/pipeline_webpage_extractor/.DS_Store
+data/.DS_Store

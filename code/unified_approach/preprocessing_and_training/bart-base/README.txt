@@ -2,10 +2,10 @@ CL stands for Capitalized Letters, as this is the model which adds labels that a
 '. 'base' refers to 'bart-base', the model used. In regards to the paper, this is the Single Finetuned Model fine-tuned on 
 BART-base.
 
-QA_CL_model.py in this folder is the code which resulted in the trained model utilized to generate the results from the
+QA_CL_base_model.py in this folder is the code which resulted in the trained model utilized to generate the results from the
 paper. It was run on the HPC Hábròk from the RUG, using a NVIDIA A100 GPU. It is heavily commented for reproducibility.
 
-The outputs for the trained model which has been reported on can be found in the QA_CL_generator.out file.
+The outputs for the trained model which has been reported on can be found in the QA_CL_base_generator.out file.
 
 In order to reproduce the model:
 1. Move requirements.txt to a directory of your choice, and install the dependencies using: pip install -r

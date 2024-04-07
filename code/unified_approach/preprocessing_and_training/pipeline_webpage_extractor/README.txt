@@ -21,7 +21,7 @@ can be changed, and functionality for these steps can be found in the functions 
 is directly responsible for the preprocessing of the raw data or .pkl files. The function 'training' is directly responsible
 for training.
 
-`evaluation/model_inference_testing_input_text.py` shows how to load and use the model to generate outputs, if you have the model and
+`Joint Pipeline Final.py` shows how to load and use the model to generate outputs, if you have the model and
 specify the right path. 
 For this, you also need to have one of the MCQ generation models, and specify the right path.
 

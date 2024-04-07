@@ -26,9 +26,8 @@ from langdetect import detect
 ## Currently these are specific to the UG Habrok HPC, so change these if you want to run the code.
 save_path_model_train = os.path.join(os.environ.get('TMPDIR'), 'results_WEB_large', 'model_WEB_large_train')
 save_path_model_test = os.path.join(os.environ.get('TMPDIR'), 'results_WEB_large', 'model_WEB_large_test')
-save_path_data = os.path.join(os.environ.get('TMPDIR'), 'results_WEB_large', 'google_data')
+save_path_data_pkl = os.path.join(os.environ.get('TMPDIR'), 'results_WEB_large', 'google_data')
 save_path_data_raw = os.path.join(os.environ.get('TMPDIR'), 'results_WEB_large', 'google_data', 'raw_data')
-load_path_data = os.path.join(os.environ.get('TMPDIR'), 'results_WEB_large', 'google_data')
 
 # Tokenization
 tokenizer = BartTokenizer.from_pretrained('facebook/bart-large')
@@ -51,9 +50,12 @@ learning_rate = 5e-6
 ## BART large has a limit of 1024, so that's what we will use.
 length = 1024
 
-## The current version of the code assumes that you have relevant_texts_{split}.pkl for each split in the right directory. 
-## If one wishes to generate new .pkl files from web searches, set this parameter to True.
-first_time = False
+## The data exists in two formats: raw data from the web searches, and .pkl files which concatenate those files with the dataset.
+### If one wishes to generate new .pkl files from raw data, set this parameter to True.
+### For RUG staff or students, the data is hosted at https://drive.google.com/file/d/1DLiqLJVr8PIYxid7phJxxYiFir_oEnOB/view?usp=sharing
+new_pkl = True
+### If one wishes to generate new .pkl files from web searches, set this parameter to True.
+new_raw_data = False
 
 ## The minimum length of extracted Wikipedia training text to be accepted as input. This is important,
 ## because some questions have silly answers that cannot serve as a topic because either the answer
@@ -92,7 +94,7 @@ def is_written_out_number(topic):
 
 
 # A function to obtain the tokenized data splits ready for training. 
-def obtain_tokenized_data(dataset, minimum_wiki_length=minimum_wiki_length, save_path_data=save_path_data, use_raw_data=False, save_raw_data=False, relevant_texts_train=False, relevant_texts_test=False, relevant_texts_validation=False):
+def obtain_tokenized_data(dataset, minimum_wiki_length=minimum_wiki_length, save_path_data=save_path_data_pkl, use_raw_data=False, save_raw_data=False, relevant_texts_train=False, relevant_texts_test=False, relevant_texts_validation=False):
     for split in dataset.keys():
         print(f"Processing {split} dataset...")
         current_dataset = dataset[split]
@@ -101,18 +103,18 @@ def obtain_tokenized_data(dataset, minimum_wiki_length=minimum_wiki_length, save
         topics = current_dataset["correct_answer"]
         if relevant_texts_train == True and split == 'train':
             # Load relevant_texts from the pickle file
-            load_path_data_train = os.path.join(load_path_data, f"relevant_texts_{split}.pkl")
-            with open(load_path_data_train, 'rb') as f:
+            save_path_data_train = os.path.join(save_path_data, f"relevant_texts_{split}.pkl")
+            with open(save_path_data_train, 'rb') as f:
                 relevant_texts = pickle.load(f)
         elif relevant_texts_test == True and split == 'test':
             # Load relevant_texts from the pickle file
-            load_path_data_test = os.path.join(load_path_data, f"relevant_texts_{split}.pkl")
-            with open(load_path_data_test, 'rb') as f:
+            save_path_data_test = os.path.join(save_path_data, f"relevant_texts_{split}.pkl")
+            with open(save_path_data_test, 'rb') as f:
                 relevant_texts = pickle.load(f)
         elif relevant_texts_validation == True and split == 'validation':
             # Load relevant_texts from the pickle file
-            load_path_data_val = os.path.join(load_path_data, f"relevant_texts_{split}.pkl")
-            with open(load_path_data_val, 'rb') as f:
+            save_path_data_val = os.path.join(save_path_data, f"relevant_texts_{split}.pkl")
+            with open(save_path_data_val, 'rb') as f:
                 relevant_texts = pickle.load(f)
                 
         else:
@@ -404,15 +406,16 @@ def main():
     # Load SciQ dataset
     dataset = load_dataset("allenai/sciq")
     
-    if first_time == True:
+    if new_raw_data == True:
         train_tokens, test_tokens, val_tokens = obtain_tokenized_data(dataset, use_raw_data=False, save_raw_data=True, relevant_texts_train=False, relevant_texts_test=False, relevant_texts_validation=False)
     
-    # Already got the data?
-    if first_time == False:
+    # Already got the .pkl files?
+    if new_raw_data == False and new_pkl == False:
         train_tokens, test_tokens, val_tokens = obtain_tokenized_data(dataset, use_raw_data=False, save_raw_data=False, relevant_texts_train=True, relevant_texts_test=True, relevant_texts_validation=True)
     
-    # Only have .txt files?
-    # train_tokens, test_tokens, val_tokens = obtain_tokenized_data(dataset, use_raw_data=True, save_raw_data=False, relevant_texts_train=False, relevant_texts_test=False, relevant_texts_validation=False)
+    # Only have the raw data?
+    if new_raw_data == False and new_pkl == True:
+        train_tokens, test_tokens, val_tokens = obtain_tokenized_data(dataset, use_raw_data=True, save_raw_data=False, relevant_texts_train=False, relevant_texts_test=False, relevant_texts_validation=False)
 
 
     train_dataset = train_tokens.remove_columns(["question", "distractor3", "distractor1", "distractor2",

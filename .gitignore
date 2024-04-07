@@ -10,3 +10,5 @@ code/unified_approach/preprocessing_and_training/pipeline_webpage_extractor/.DS_
 data/.DS_Store
 code/unified_approach/evaluation/.DS_Store
 code/unified_approach/preprocessing_and_training/bart-base/.DS_Store
+code/modular_approach/fine_tuning_bart_base/distractors/.DS_Store
+code/modular_approach/fine_tuning_bart_base/.DS_Store

@@ -24,3 +24,5 @@ In case a user wants to separately perform preprocessing and training, the main(
 can be changed, and functionality for these steps can be found in the functions above it. The function 'obtain_tokenized_data'
 is directly responsible for the preprocessing of the raw data or .pkl files. The function 'training' is directly responsible
 for training.
+
+`challenge.ipynb` demos the webpage extra feature of facilitating automated input extraction from webpages.

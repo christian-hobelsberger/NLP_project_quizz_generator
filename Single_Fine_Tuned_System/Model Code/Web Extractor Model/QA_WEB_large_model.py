@@ -3,6 +3,7 @@
 Created on Fri Mar 29 11:59:15 2024
 
 @author: Rutger Lemein
+
 """
 
 import requests
@@ -22,23 +23,30 @@ import pickle
 import re
 from langdetect import detect
 
+# Tokenization
+tokenizer = BartTokenizer.from_pretrained('facebook/bart-large')
+
+# Model Configuration
+model = BartForConditionalGeneration.from_pretrained('facebook/bart-large')
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model.to(device)
+
 # Save paths for the model
-## Currently these are specific to the UG Habrok HPC, so change these if you want to run the code.
+## For my pc
+# save_path_model = "C:/Users/DLeme/Downloads/"
+# save_path_model_train = save_path_model
+# save_path_model_test = save_path_model
+# save_path_data = save_path_model
+# save_path_data_raw = os.path.join("C:\\", "Users", "DLeme", "Downloads", "raw_data")
+# load_path_data = os.path.join("C:\\", "Users", "DLeme", "Downloads")
+
+## For Habrok
 save_path_model_train = os.path.join(os.environ.get('TMPDIR'), 'results_WEB_large', 'model_WEB_large_train')
 save_path_model_test = os.path.join(os.environ.get('TMPDIR'), 'results_WEB_large', 'model_WEB_large_test')
 save_path_data = os.path.join(os.environ.get('TMPDIR'), 'results_WEB_large', 'google_data')
 save_path_data_raw = os.path.join(os.environ.get('TMPDIR'), 'results_WEB_large', 'google_data', 'raw_data')
 load_path_data = os.path.join(os.environ.get('TMPDIR'), 'results_WEB_large', 'google_data')
 
-# Tokenization
-tokenizer = BartTokenizer.from_pretrained('facebook/bart-large')
-
-# Model Configuration
-model_name = "facebook/bart-large"  
-tokenizer = BartTokenizer.from_pretrained(model_name)
-model = BartForConditionalGeneration.from_pretrained(model_name)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model.to(device)
 
 ## Epochs, batch size, learning rate
 num_epochs_train = 100
@@ -46,27 +54,39 @@ num_epochs_test = 2
 batch_size = 8 
 learning_rate = 5e-6
 
-## Length of the input; so the size to which the predictors and predictee are padded.
-## After filtering, inputs go up to about a maximum of 50000 characters, ~4.7 average characters per word, so 50000/4.7 = 10638 length.
-## BART large has a limit of 1024, so that's what we will use.
+## Length of the input; so the size to which the predictors and predictee are padded
+## After filtering, inputs go up to about a maximum of 50000 characters.
+## 4.7 average characters per word, so 50000/4.7 = 10638 length
+## That's a little too much, and I'd rather truncate when text gets very long.
+## After all it's just randomly selecting any text that fits the criteria of containing the topic.
+## So not using all of it is not a shame at all, especially if there's a lot. Hopefully a lesser amount
+## will contain enough information so that it can be transformed into the support of the SciQ set, hopefully.
+## BART has a limit of 1024, so that's what we will use.
 length = 1024
 
-## The current version of the code assumes that you have relevant_texts_{split}.pkl for each split in the right directory. 
-## If one wishes to generate new .pkl files from web searches, set this parameter to True.
-first_time = False
+### Not doing this right now because I upped the minimum wiki length and so I just don't know how much will be cut; we'll use all the remaining data and see.
+## However, a lot of data points will be dropped as they are too short in size (see below). So maybe it will be a little better.
+## In any case, it seems risky to leave the dataloaders as big as they are, given that with 100 of each split, 30% of the data points
+## were eliminated in the filtering process. So let's take a good 35% elimination as a safety measure (we do not want to have to run the model again), 
+## then we have 11679 * 0.65 = 7591 in train, and 650 in test and validation. This should also reduce training time by approx 35%, so 15 hours now (YAY).
+## 45 hour script it is. 
+# data_size_train = 7584
+# data_size_test = 648
+# data_size_validate = 648
 
-## The minimum length of extracted Wikipedia training text to be accepted as input. This is important,
+## This one controls the minimum length of text to be accepted as input. This is important,
 ## because some questions have silly answers that cannot serve as a topic because either the answer
 ## is too general, like 'brain', or the answer is too abstract, like '40 percent', and results in a
 ## Wikipedia reference page with a very low number of characters (30-100 usually). These pages must be avoided at all costs.
 ## Very short texts in general are likely to not contain enough information to train the model with. 
-## 600 characters is about 128 words minimum (so essentially BART will have a minimum input length of ~128, albeit word tokens are not words).
+## 600 characters is about 128 words minimum (so essentially BART will have a minimum input length of ~128 (words are not exactly word tokens but aight)).
 ## Note that this variable is also used to filter out any empty inputs, however those empty inputs will have some
-## label characters! So be sure to keep this above 100 at the very minimum.
+## label characters! So be sure to keep this above 300 at least.
+
 minimum_wiki_length = 600
 
 
-# Tokenizer functionality
+
 def tokenize_func(examples, length=length):
     inputs = tokenizer(examples['merged_column_input'], return_tensors="pt", max_length=length, truncation=True, padding='max_length')
     labels = tokenizer(examples['merged_column_output'], return_tensors="pt", max_length=length, truncation=True, padding='max_length')
@@ -79,25 +99,22 @@ def tokenize_func(examples, length=length):
 
 
 
-# Filter to remove data points where the correct answer is a literal number
+
 def topic_contains_number(topic):
     # Regular expression to match any digit in the topic
     regex = re.compile(r'\d')
     return bool(regex.search(topic))
 
-# Filter to remove data points where the correct answer is a written out number
 def is_written_out_number(topic):
     written_out_numbers = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'] 
     return topic.lower() in written_out_numbers
 
-
-# A function to obtain the tokenized data splits ready for training. 
 def obtain_tokenized_data(dataset, minimum_wiki_length=minimum_wiki_length, save_path_data=save_path_data, use_raw_data=False, save_raw_data=False, relevant_texts_train=False, relevant_texts_test=False, relevant_texts_validation=False):
     for split in dataset.keys():
         print(f"Processing {split} dataset...")
         current_dataset = dataset[split]
         
-        # First generate the texts, or load them if you have them (relevant_texts_{split} == True)
+        # First generate the texts
         topics = current_dataset["correct_answer"]
         if relevant_texts_train == True and split == 'train':
             # Load relevant_texts from the pickle file
@@ -119,7 +136,6 @@ def obtain_tokenized_data(dataset, minimum_wiki_length=minimum_wiki_length, save
             relevant_texts = []
             for topic in topics:
                 if not topic_contains_number(topic) and not is_written_out_number(topic):
-                    # Start generating relevant texts, which can be done through raw .txt files with the topic names instead of URL searching
                     relevant_text = obtain_relevant_text(topic, use_raw_data, save_raw_data)
                 else: 
                     relevant_text = None
@@ -145,7 +161,7 @@ def obtain_tokenized_data(dataset, minimum_wiki_length=minimum_wiki_length, save
         current_dataset = current_dataset.add_column('merged_column_input', merged_column_input)
         current_dataset = current_dataset.add_column('merged_column_output', merged_column_output)
         
-        # Filter the dataset to include only questions with relevant extracted text
+        # Filter the dataset to include only questions with relevant text for the support
         filtered_dataset = current_dataset.filter(lambda example: example['merged_column_input'] != "" and example['merged_column_input'] is not None and len(example['merged_column_input']) > minimum_wiki_length)
         # Filter the dataset to include only questions with supporting evidence for the correct answer (non-empty input)
         filtered_dataset = filtered_dataset.filter(lambda example: example['support'] is not None and example['support'] != "")
@@ -171,7 +187,7 @@ def obtain_tokenized_data(dataset, minimum_wiki_length=minimum_wiki_length, save
 
 
 
-# Pretty standard training function
+
 def training(dataloader, num_epochs, save_path_model, model=model, learning_rate=learning_rate):
     optimizer = AdamW(model.parameters(), lr=learning_rate)
     
@@ -189,6 +205,8 @@ def training(dataloader, num_epochs, save_path_model, model=model, learning_rate
     for epoch in range(num_epochs):
         print(f"Training, epoch: {epoch}")
         sys.stdout.flush()
+        # generated_questions = []
+        # reference_questions = []
         total_loss = 0.0
         batchcounter = 0
         
@@ -243,9 +261,7 @@ def training(dataloader, num_epochs, save_path_model, model=model, learning_rate
 
 
 
-# Actually this function evaluates, not validates, that's where the mix-up mentioned in the paper between
-# the data splits happened. It's not our final evaluation however; that is mostly qualitative.
-# This is just for some insight on performances on unseen data as the model was being built and trained.
+
 def validate(model, eval_dataloader):
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     model.to(device)
@@ -270,7 +286,7 @@ def validate(model, eval_dataloader):
                 
                 
  
-# A function to find Wikipedia pages through Google search                
+                
 def google_search_wikipedia(topic, max_retries=1, initial_delay=2000):
     # There is a search limit, which makes things hard. 
     # I think it's 300 requests per ~33.333 minutes.
@@ -303,7 +319,7 @@ def google_search_wikipedia(topic, max_retries=1, initial_delay=2000):
 
 
 
-# Function to obtain text from a URL, specifically paragraphs
+
 def extract_text_from_url(url):
     try:
         response = requests.get(url)
@@ -323,13 +339,11 @@ def extract_text_from_url(url):
 
 
 
-# Filtering functionality that filters paragraphs without the topic.
-# It also filters non-English texts. 
+
 def filter_paragraphs_by_topic(text, topic):
     relevant_paragraphs = []
     try:
         language_text = detect(text)
-        # Text must be in English
         if (language_text == 'en'):
             # Split the text into paragraphs based on newline characters
             paragraphs = text.split('\n')
@@ -342,7 +356,6 @@ def filter_paragraphs_by_topic(text, topic):
             # However, simple doesn't always work, so
             if len(relevant_paragraphs) == 0:
                 topics = topic.split(' ')
-                # If parts of the topic exist in the paragraph for an empty result on the entire topic
                 for split_topic in topics:
                     for paragraph in paragraphs:
                         if split_topic.lower() in paragraph.lower() and paragraph not in relevant_paragraphs:
@@ -352,18 +365,22 @@ def filter_paragraphs_by_topic(text, topic):
             sys.stdout.flush()
             return None
                     
+        # If that doesn't work... need to think of something else
+        # Additionally, certain paragraph filters basically return
+        # the entire text, so it really isn't a perfect method.
+        # Sometimes it'll return a text of length 4000, other times of
+        # length 40000.
     except:
         print("No text was fetched for this topic, as no Wikipedia page was found, so we cannot filter it.")
         sys.stdout.flush()
-        return None        
+        return None
+        
                 
     return ' '.join(relevant_paragraphs)
 
 
 
-# This function is responsible for filtering out texts with non-Unicode characters.
-# It also calls upon the filtering functionality of filter_paragraphs_by_topic(text, topic).
-# It has functionality to use raw .txt files, or search new data (not recommended).
+
 def obtain_relevant_text(topic, use_raw_data=False, save_raw_data=False):
     if use_raw_data == False:
         search_results = google_search_wikipedia(topic)
@@ -376,7 +393,7 @@ def obtain_relevant_text(topic, use_raw_data=False, save_raw_data=False):
                 try:
                     text = file.read()  
                 except:
-                    print("Non-Unicode character.")
+                    print("Weird character... sad I can't load those files I guess.")
                     text = None
         except:
             print("No file for this topic.")
@@ -386,14 +403,16 @@ def obtain_relevant_text(topic, use_raw_data=False, save_raw_data=False):
         # Save the text to a file
         save_path_data_raw_new = os.path.join(save_path_data_raw, f"{topic}.txt")
         with open(save_path_data_raw_new, 'w', encoding='utf-8') as file:
-            file.write(text)        
+            file.write(text)
+        
         
     relevant_text = filter_paragraphs_by_topic(text, topic)
+    # print(relevant_text)
     if relevant_text:
-        # Show how much text was filtered
         print(f"Length original text: {len(text)}")
         print(f"Length relevant text: {len(relevant_text)}")
-        sys.stdout.flush()    
+        sys.stdout.flush()
+    
     
     return relevant_text
 
@@ -401,17 +420,34 @@ def obtain_relevant_text(topic, use_raw_data=False, save_raw_data=False):
 
 
 def main():
+    # topic1 = "mesophilic organisms"
+    # topic2 = "coriolis effect"
+    # topic3 = "alpha decay"
+    # topic4 = "meteorite"
+    # topic5 = "radioactivity"
+    # relevant_text = obtain_relevant_text(topic1)
+    # relevant_text = obtain_relevant_text(topic2)
+    # relevant_text = obtain_relevant_text(topic3)
+    # relevant_text = obtain_relevant_text(topic4)
+    # relevant_text = obtain_relevant_text(topic5)
+    
+    # So, the text maker works. Now, a model that takes these types of text
+    # and transforms them into supports.
     # Load SciQ dataset
     dataset = load_dataset("allenai/sciq")
     
-    if first_time == True:
-        train_tokens, test_tokens, val_tokens = obtain_tokenized_data(dataset, use_raw_data=False, save_raw_data=True, relevant_texts_train=False, relevant_texts_test=False, relevant_texts_validation=False)
+    # To run it on my own pc
+    # dataset['train'] = dataset['train'].select(range(100))
+    # dataset['test'] = dataset['test'].select(range(90))
+    # dataset['validation'] = dataset['validation'].select(range(100))
+    
+    # First time? 
+    # train_tokens, test_tokens, val_tokens = obtain_tokenized_data(dataset, use_raw_data=False, save_raw_data=True, relevant_texts_train=False, relevant_texts_test=False, relevant_texts_validation=False)
     
     # Already got the data?
-    if first_time == False:
-        train_tokens, test_tokens, val_tokens = obtain_tokenized_data(dataset, use_raw_data=False, save_raw_data=False, relevant_texts_train=True, relevant_texts_test=True, relevant_texts_validation=True)
+    train_tokens, test_tokens, val_tokens = obtain_tokenized_data(dataset, use_raw_data=False, save_raw_data=False, relevant_texts_train=True, relevant_texts_test=True, relevant_texts_validation=True)
     
-    # Only have .txt files?
+    # New filtering on old raw_data resulting in None values? .pkl files will be saved.
     # train_tokens, test_tokens, val_tokens = obtain_tokenized_data(dataset, use_raw_data=True, save_raw_data=False, relevant_texts_train=False, relevant_texts_test=False, relevant_texts_validation=False)
 
 
@@ -427,19 +463,23 @@ def main():
     test_dataset.set_format("torch")
     val_dataset.set_format("torch")
     
+    # small_train_dataset = train_dataset.shuffle(seed=42).select(range(data_size_train))
+    # small_test_dataset = test_dataset.shuffle(seed=42).select(range(data_size_test))
+    # small_val_dataset = val_dataset.shuffle(seed=42).select(range(data_size_validate))
+    
     # Dataloaders required for the model
     train_dataloader = DataLoader(train_dataset, shuffle=True, batch_size=batch_size)
     test_dataloader = DataLoader(test_dataset, shuffle=True, batch_size=batch_size)
     eval_dataloader = DataLoader(val_dataset, batch_size=batch_size)
     
-    # Training
+    # Training, 20 epochs
     train_model = training(train_dataloader, num_epochs_train, save_path_model_train, model)
     
-    # Fine-tuning the trained model on testing data
+    # Fine-tuning the trained model on testing data, 1 epochs
     print("FINISHED TRAINING. NOW FINE-TUNING ON TEST DATA.\n")
     test_model = training(test_dataloader, num_epochs_test, save_path_model_test, train_model)
 
-    # Last evaluation, no training, no epochs
+    # Last validation, no training, no epochs
     validate(test_model, eval_dataloader)
             
     

@@ -1,4 +1,4 @@
-# AI-Driven Science Quiz Generation
+# Multiple Choice Question Generation by Fine-Tuning BART in Modular and Unified Approaches
 
 ## Overview
 In education, creating quizzes and assessments is vital for evaluating student understanding. However, crafting high-quality multiple-choice questions can be challenging. Artificial intelligence (AI) technologies offer solutions to streamline question creation, saving time for educators and ensuring consistent assessment quality.

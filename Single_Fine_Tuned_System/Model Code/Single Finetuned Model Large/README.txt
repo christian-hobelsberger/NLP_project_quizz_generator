@@ -10,7 +10,7 @@ The outputs for the trained model which has been reported on can be found in the
 In order to reproduce the model:
 1. Move requirements.txt to a directory of your choice, and install the dependencies using: pip install -r
 "DirectoryOfChoice/requirements.txt".
-2. Open the QA_WEB_large_model.py, and read comments for the global variables: change at least ALL the save paths.
+2. Open the QA_CL_large_model.py, and read comments for the global variables: change at least ALL the save paths.
 3. Press run, it will first load and preprocess the SciQ dataset and show the filtering process in the output, and then start 
 training. After training, it will generate some outputs on the unseen data split, however this is not part of the evaluation
 of the paper, and no learning is involved in this step. 

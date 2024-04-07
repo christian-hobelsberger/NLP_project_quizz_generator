@@ -8,7 +8,7 @@ The goal was to fine-tune existing language models for the purpose of automated 
 
 
 ## Models
-We fine-tuned a machine learning models. In pre-alpha, flan-t5 was trained for disparate question/answer and distractor generation in the _modular_ approach. In alpha, BART-base were used for similar modular training and also for the *unified* task, while BART-large was fine-tuned only on the unified task. To also tackle the challenge, the latter model was encapsulated for extracting input texts from webpages.
+We fine-tuned various machine learning models. In pre-alpha, flan-t5 was trained for disparate question/answer and distractor generation in the _modular_ approach. In alpha, BART-base were used for similar modular training and also for the *unified* task, while BART-large was fine-tuned only on the unified task. To also tackle the challenge, the latter model was encapsulated for extracting input texts from webpages.
 
 This repository contains the code used for preprocessing, training, and evaluating these models hosted on [Huggingface](https://huggingface.co/models):
 
@@ -18,7 +18,7 @@ This repository contains the code used for preprocessing, training, and evaluati
 
 **Alpha**:
 - [final-bart-question-generation](https://huggingface.co/rizkiduwinanto/final-bart-question-generation)
-- [final-bart-distractor-generation](https://huggingface.co/b-b-brouwer/CL_base)
+- [final-bart-distractor-generation](https://huggingface.co/rizkiduwinanto/final-bart-distractor-generation)
 - [CL_base](https://huggingface.co/b-b-brouwer/CL_base)
 - [CL_large](https://huggingface.co/b-b-brouwer/CL_large)
 

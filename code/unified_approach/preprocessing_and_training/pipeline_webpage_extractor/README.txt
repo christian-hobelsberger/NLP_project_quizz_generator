@@ -21,9 +21,8 @@ can be changed, and functionality for these steps can be found in the functions 
 is directly responsible for the preprocessing of the raw data or .pkl files. The function 'training' is directly responsible
 for training.
 
-'Challenge.ipynb' shows how to load the front-end Gradio application for the model.
+`challenge.ipynb` demos the webpage extra feature of facilitating automated input extraction from webpages as a front-end Gradio application.
 
-`Joint Pipeline Final.py` shows how to load and use the model to generate outputs, if you have the model and
+`evaluation/model_inference_testing_input_text.py` shows how to load and use the model to generate outputs, if you have the model and
 specify the right path. 
 For this, you also need to have one of the MCQ generation models, and specify the right path.
-

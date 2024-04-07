@@ -20,5 +20,5 @@ can be changed, and functionality for these steps can be found in the functions 
 'obtain_tokenized_filtered_splits' is directly responsible for the preprocessing of the SciQ dataset. The function
 'training' is directly responsible for training. 
 
-TestingQAModel.py in the main folder shows how to load and use the model to generate outputs, if you have the model and
+'TestingQAModel.py' in the main folder shows how to load and use the model to generate outputs, if you have the model and
 specify the right path. 

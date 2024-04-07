@@ -25,3 +25,5 @@ for training.
 specify the right path. 
 For this, you also need to have one of the MCQ generation models, and specify the right path.
 
+'Challenge.ipynb' shows how to load the front-end Gradio application for the model.
+

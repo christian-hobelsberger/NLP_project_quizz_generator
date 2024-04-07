@@ -39,8 +39,8 @@ The code for preprocessing of SciQ is available in `evaluation_both_approaches/p
 
 Equivalent functionality is (unfortunately) for the BART-based **Alpha** and **Beta/challenge** models repeated in the code used for training:
 
-- final-bart-question-generation: `modular_approach/fine_tuning_bart_base/distractors/da_cl.py`
-- final-bart-distractor-generation: `modular_approach/fine_tuning_bart_base/question_answer/qa_cl.py`
+- final-bart-question-generation: `modular_approach/fine_tuning_bart_base/question_answer/qa_cl.py`
+- final-bart-distractor-generation: `modular_approach/fine_tuning_bart_base/distractors/da_cl.py`
 - CL_base: `unified_approach/preprocessing_and_training/bart-base/qa_cl_base_model.py`
 - CL_large: `unified_approach/preprocessing_and_training/bart-large/qa_cl_large_model.py`
 

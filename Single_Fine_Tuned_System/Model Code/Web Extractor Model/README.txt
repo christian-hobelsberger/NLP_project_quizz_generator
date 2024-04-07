@@ -3,6 +3,8 @@ In regards to the paper, this is the Web Extractor Model fine-tuned on BART-larg
 
 QA_WEB_large_model.py in this folder is the code which resulted in the trained model utilized to generate the results from the paper. It was run on the HPC Hábròk from the RUG, using a NVIDIA A100 GPU. It is heavily commented for reproducibility.
 
+The outputs for the trained model which has been reported on can be found in the QA_WEB_large_generator.out file.
+
 In order to reproduce the model:
 1. Move requirements.txt to a directory of your choice, and install the dependencies using: pip install -r "DirectoryOfChoice/requirements.txt".
 2. Unpack the data hosted at https://drive.google.com/file/d/1DLiqLJVr8PIYxid7phJxxYiFir_oEnOB/view?usp=sharing 

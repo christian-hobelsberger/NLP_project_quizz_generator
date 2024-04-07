@@ -39,8 +39,8 @@ The code for preprocessing of SciQ is available in `evaluation_both_approaches/p
 
 Equivalent functionality is (unfortunately) for the BART-based **Alpha** and **Beta/challenge** models repeated in the code used for training:
 
-- final-bart-question-generation: `modular_approach/fine_tuning_bart_base/distractors/da_cl.py`
-- final-bart-distractor-generation: `modular_approach/fine_tuning_bart_base/question_answer/qa_cl.py`
+- final-bart-question-generation: `modular_approach/fine_tuning_bart_base/question_answer/qa_cl.py`
+- final-bart-distractor-generation: `modular_approach/fine_tuning_bart_base/distractors/da_cl.py`
 - CL_base: `unified_approach/preprocessing_and_training/bart-base/qa_cl_base_model.py`
 - CL_large: `unified_approach/preprocessing_and_training/bart-large/qa_cl_large_model.py`
 
@@ -48,4 +48,4 @@ Equivalent functionality is (unfortunately) for the BART-based **Alpha** and **B
 ## Model Inference and Evaluation
 *File paths relative to* `code`
 
-Model inference procedures are demonstrated in the Jupyter notebooks in `evaluation_both_approaches` and `unified_approach/challenge` (using the Huggingface API to load the models) and in `.py` files in `unified_approach/evaluation` (assuming local models). The Jupyter notebook `pipeline_output_detokenized.ipynb` is geared towards generating and saving pandas DataFrames of detokenized outputs, while `distractors_metrics_quantitative.ipynb` demonstrates the procedure for quantitative evaluation using the BLUE metric, among others. The detokenized outputs are human-readible and can be evaluated according to the criteria proposed by [Tarrant et al. (2006)](https://hub.hku.hk/bitstream/10722/54324/1/134913.pdf?accept=1).
+Model inference procedures are demonstrated in the Jupyter notebooks in `evaluation_both_approaches` and `unified_approach/preprocessing_and_training` (using the Huggingface API to load the models) and in `.py` files in `unified_approach/evaluation` (assuming local models). The Jupyter notebook `pipeline_output_detokenized.ipynb` is geared towards generating and saving pandas DataFrames of detokenized outputs, while `distractors_metrics_quantitative.ipynb` demonstrates the procedure for quantitative evaluation using the BLUE metric, among others. The detokenized outputs are human-readible and can be evaluated according to the criteria proposed by [Tarrant et al. (2006)](https://hub.hku.hk/bitstream/10722/54324/1/134913.pdf?accept=1).

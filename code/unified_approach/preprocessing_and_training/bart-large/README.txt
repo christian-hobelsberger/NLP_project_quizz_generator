@@ -15,10 +15,10 @@ In order to reproduce the model:
 training. After training, it will generate some outputs on the unseen data split, however this is not part of the evaluation
 of the paper, and no learning is involved in this step. 
 
-TestingQAModel.py in the main folder shows how to load and use the model to generate outputs, if you have the model and
-specify the right path. 
-
 In case a user wants to separately perform preprocessing and training, the main() function located at the bottom of the file
 can be changed, and functionality for these steps can be found in the functions above it. The function 
 'obtain_tokenized_filtered_splits' is directly responsible for the preprocessing of the SciQ dataset. The function
 'training' is directly responsible for training. 
+
+TestingQAModel.py in the main folder shows how to load and use the model to generate outputs, if you have the model and
+specify the right path. 
